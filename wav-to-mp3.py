@@ -53,8 +53,10 @@ for idx, src_file in enumerate(file_names):
     print('-------------------------------------------------------------------------------')
     print('{} ({}/{})'.format(src_file, idx + 1, len(file_names)))
     dest_file = "converted/" + src_file.replace("wav", "mp3")
-    convert_command = 'ffmpeg -y -i "{}" -b:a 128k -af silenceremove=stop_periods=-1:' \
-                      'stop_duration=5:stop_threshold=-50dB,dynaudnorm "{}"'\
-        .format(src_file, dest_file)
+    convert_command = 'ffmpeg -y -i "{}" -b:a 128k -af silenceremove='\
+    'start_periods=1:start_threshold=-50dB:'\
+    'stop_periods=-1:stop_duration=5:stop_threshold=-50dB,'\
+    'dynaudnorm'\
+    ' "{}"'.format(src_file, dest_file)
     os.system(convert_command)
  
