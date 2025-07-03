@@ -1,6 +1,7 @@
 import argparse
 import os
 import datetime
+from win32_setctime import setctime
 
 argParser = argparse.ArgumentParser(
     description='Переименовать и скопировать аудиозапись служения на сервер'
@@ -42,14 +43,8 @@ if len(wavFileList) > 1:
 wavFile = wavFileList[0]
 print(f"Обработка файла {wavFile}")
 
-# reset create/modify date
-currentDate = datetime.datetime.now()
-# TODO currently works only for update time (not for create time)
-print("Сброс даты создания и изменения файла")
-timestamp = currentDate.timestamp()
-os.utime(wavFile, (timestamp, timestamp))
-
 # rename and move the file
+currentDate = datetime.datetime.now()
 year = currentDate.year
 month = currentDate.month
 day = currentDate.day
@@ -67,6 +62,17 @@ formattedDate = f"{year}{month:02d}{day:02d} {formattedWeekday}{dayPart}"
 newFileName = f"{formattedDate}.wav"
 print(f"Новое название файла: {newFileName}")
 newFilePath = f"{destDir}/{newFileName}"
-print(f"Переименование и перемещение в каталог {newFilePath}")
+print(f"Переименование и перемещение в каталог {newFilePath}. Пожалуйста, подождите...")
+if os.path.isfile(newFilePath):
+    print(f"Файл {newFilePath} уже существует. Перемещение невозможно.")
+    exit(1)
 os.rename(wavFile, newFilePath)
 print("Перемещение завершено")
+
+# reset create/modify date
+print("Сброс даты создания и изменения файла.")
+timestamp = currentDate.timestamp()
+os.utime(newFilePath, (timestamp, timestamp))
+setctime(newFilePath, timestamp)
+
+print("Обработка завершена")
