@@ -1,6 +1,7 @@
 import argparse
 import os
 import datetime
+import shutil
 from win32_setctime import setctime
 
 argParser = argparse.ArgumentParser(
@@ -33,15 +34,15 @@ if not os.path.isdir(destDir):
 # find a wav file
 childrenList = os.listdir(sourceDir)
 fileList = [f"{sourceDir}/{f}" for f in childrenList if os.path.isfile(f"{sourceDir}/{f}")]
-wavFileList = [f for f in fileList if f.endswith(".wav")]
-if len(wavFileList) == 0:
+wavFilePathList = [f for f in fileList if f.endswith(".wav")]
+if len(wavFilePathList) == 0:
     print("Отсутствуют .wav файлы в исходном каталоге")
     exit(1)
-if len(wavFileList) > 1:
-    print(f"Найдено несколько .wav файлов в исходном каталоге: {wavFileList}. Для выполнения скрипта необходимо наличие только одного файла.")
+if len(wavFilePathList) > 1:
+    print(f"Найдено несколько .wav файлов в исходном каталоге: {wavFilePathList}. Для выполнения скрипта необходимо наличие только одного файла.")
     exit(1)
-wavFile = wavFileList[0]
-print(f"Обработка файла {wavFile}")
+sourceFilePath = wavFilePathList[0]
+print(f"Обработка файла {sourceFilePath}")
 
 # rename and move the file
 currentDate = datetime.datetime.now()
@@ -60,19 +61,25 @@ if weekday == 6: # sunday
         dayPart = " вечер"
 formattedDate = f"{year}{month:02d}{day:02d} {formattedWeekday}{dayPart}"
 newFileName = f"{formattedDate}.wav"
-print(f"Новое название файла: {newFileName}")
-newFilePath = f"{destDir}/{newFileName}"
-print(f"Переименование и перемещение в каталог {newFilePath}. Пожалуйста, подождите...")
-if os.path.isfile(newFilePath):
-    print(f"Файл {newFilePath} уже существует. Перемещение невозможно.")
-    exit(1)
-os.rename(wavFile, newFilePath)
-print("Перемещение завершено")
+newSourceFilePath = f"{sourceDir}/{newFileName}"
+print(f"Переименование исходного файла: {newSourceFilePath}")
+os.rename(sourceFilePath, newSourceFilePath)
 
-# reset create/modify date
-print("Сброс даты создания и изменения файла.")
-timestamp = currentDate.timestamp()
-os.utime(newFilePath, (timestamp, timestamp))
-setctime(newFilePath, timestamp)
+if sourceDir == destDir:
+    # reset create/modify date
+    print("Сброс даты создания и изменения файла.")
+    timestamp = currentDate.timestamp()
+    os.utime(newSourceFilePath, (timestamp, timestamp))
+    setctime(newSourceFilePath, timestamp)
+else:
+    targetFilePath = f"{destDir}/{newFileName}"
+    if os.path.isfile(targetFilePath):
+        print(f"Файл {targetFilePath} уже существует. Копирование невозможно.")
+        exit(1)
+    print(f"Копирование в каталог {targetFilePath}. Пожалуйста, подождите...")
+    shutil.copy(newSourceFilePath, targetFilePath)
+    print("Копирование завершено")
+    print("Удаление исходного файла. Пожалуйста, подождите...")
+    os.remove(newSourceFilePath)
 
 print("Обработка завершена")
